@@ -3,6 +3,7 @@ const morgan = require('morgan')
 
 //local files
 const router = require('./router')
+const {protect} = require('./modules/auth.js')
 
 const app = express()
 
@@ -23,6 +24,8 @@ app.get('/', (req, res) => {
 		res.status(200)
 		res.json({message: 'hello'})
 });
+
+app.use('/api', protect ,router)
 
 app.use('/api', router)
 
