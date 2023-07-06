@@ -1,4 +1,14 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const { nextTick } = require('process');
+
+const comparePasswords = (password, hash) => {
+		return bcrypt.compare(password, hash)
+}
+
+const hasPasswords = (password) => {
+		return bcrypt.hash(password, 5)
+}
 
 const createJWT = (user) => {
 		const token = jwt.sign({
@@ -9,7 +19,7 @@ const createJWT = (user) => {
 		return token;
 }
 
-const protect = (req, res) => {
+const protect = (req, res, next) => {
 		const bearer = req.headers.authorization;
 		
 		if(!bearer){
@@ -17,9 +27,29 @@ const protect = (req, res) => {
 				res.json({message: 'not authorized'});
 				return
 		}
+
+		const [, token] = bearer.split(' ')
+
+		if (!token){
+				res.status(401)
+				res.json({message: 'not valid token'})
+				return
+		}
+
+		try {
+				const user = jwt.verify(token, process.env.JWT_SECRET)
+				req.user = user
+				next()
+		} catch (e){
+				console.log(e)
+				res.status(401)
+				res.json({message: 'not valid token'})
+		}
 }
 
 module.exports = {
+		comparePasswords,
+		hasPasswords,
 		createJWT,
 		protect
 }
